@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Data Table</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1f1f1f;
+            color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #2c2c2c;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            font-size: 26px;
+            margin-bottom: 20px;
+            color: #4CAF50;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+
+        th {
+            cursor: pointer;
+            color: #f0f0f0;
+        }
+
+        th.sortable:after {
+            content: ' \25B2'; /* Unicode for up arrow */
+        }
+
+        th.sortable.sorted-asc:after {
+            content: ' \25B2'; /* Unicode for up arrow */
+        }
+
+        th.sortable.sorted-desc:after {
+            content: ' \25BC'; /* Unicode for down arrow */
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            background: #1f1f1f;
+            color: #f0f0f0;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .pagination button {
+            background-color: #4CAF50;
+            color: #ffffff;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+
+        .pagination button.disabled {
+            background-color: #444;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Interactive Data Table</h1>
+        <input type="text" id="filter-input" placeholder="Filter...">
+        <table id="data-table">
+            <thead>
+                <tr>
+                    <th class="sortable">First Name</th>
+                    <th class="sortable">Last Name</th>
+                    <th class="sortable">City</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Liam</td><td>Smith</td><td>New York</td></tr>
+                <tr><td>Emma</td><td>Johnson</td><td>Los Angeles</td></tr>
+                <tr><td>Noah</td><td>Williams</td><td>Chicago</td></tr>
+                <tr><td>Olivia</td><td>Jones</td><td>Houston</td></tr>
+                <tr><td>William</td><td>Brown</td><td>Phoenix</td></tr>
+                <tr><td>James</td><td>Garcia</td><td>San Diego</td></tr>
+                <tr><td>Ava</td><td>Miller</td><td>Dallas</td></tr>
+                <tr><td>Isabella</td><td>Martinez</td><td>San Jose</td></tr>
+                <tr><td>Lucas</td><td>Davis</td><td>Austin</td></tr>
+                <tr><td>Mia</td><td>Lopez</td><td>Jacksonville</td></tr>
+                <!-- Additional rows can be added here -->
+            </tbody>
+        </table>
+        <div class="pagination">
+            <button id="prev-page">Previous</button>
+            <span id="page-info"></span>
+            <button id="next-page">Next</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tableData = [
+                { firstname: "Liam", lastname: "Smith", city: "New York" },
+                { firstname: "Emma", lastname: "Johnson", city: "Los Angeles" },
+                { firstname: "Noah", lastname: "Williams", city: "Chicago" },
+                { firstname: "Olivia", lastname: "Jones", city: "Houston" },
+                { firstname: "William", lastname: "Brown", city: "Phoenix" },
+                { firstname: "James", lastname: "Garcia", city: "San Diego" },
+                { firstname: "Ava", lastname: "Miller", city: "Dallas" },
+                { firstname: "Isabella", lastname: "Martinez", city: "San Jose" },
+                { firstname: "Lucas", lastname: "Davis", city: "Austin" },
+                { firstname: "Mia", lastname: "Lopez", city: "Jacksonville" }
+            ]; // Sample data
+
+            const rowsPerPage = 10;
+            let currentPage = 1;
+            let filteredData = [...tableData];
+            let sortDirection = 'asc';
+            let currentSortColumn = '';
+
+            const tableBody = document.querySelector('#data-table tbody');
+            const filterInput = document.getElementById('filter-input');
+            const prevPageButton = document.getElementById('prev-page');
+            const nextPageButton = document.getElementById('next-page');
+            const pageInfo = document.getElementById('page-info');
+            const sortableHeaders = document.querySelectorAll('.sortable');
+
+            sortableHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    const column = header.textContent.toLowerCase().replace(' ', '');
+                    if (currentSortColumn === column) {
+                        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSortColumn = column;
+                        sortDirection = 'asc';
+                    }
+                    sortData(column, sortDirection);
+                    renderTable();
+                    updatePagination();
+                });
+            });
+
+            filterInput.addEventListener('input', (e) => {
+                const filterValue = e.target.value.toLowerCase();
+                filteredData = tableData.filter(row => {
+                    return Object.values(row).some(value => 
+                        String(value).toLowerCase().includes(filterValue)
+                    );
+                });
+                currentPage = 1;
+                renderTable();
+                updatePagination();
+            });
+
+            prevPageButton.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTable();
+                    updatePagination();
+                }
+            });
+
+            nextPageButton.addEventListener('click', () => {
+                if (currentPage * rowsPerPage < filteredData.length) {
+                    currentPage++;
+                    renderTable();
+                    updatePagination();
+                }
+            });
+
+            function sortData(column, direction) {
+                const sortColumn = column.toLowerCase();
+                filteredData.sort((a, b) => {
+                    if (a[sortColumn] < b[sortColumn]) {
+                        return direction === 'asc' ? -1 : 1;
+                    }
+                    if (a[sortColumn] > b[sortColumn]) {
+                        return direction === 'asc' ? 1 : -1;
+                    }
+                    return 0;
+                });
+            }
+
+            function renderTable() {
+                tableBody.innerHTML = '';
+                const start = (currentPage - 1) * rowsPerPage;
+                const end = start + rowsPerPage;
+                const pageData = filteredData.slice(start, end);
+
+                pageData.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${row.firstname}</td><td>${row.lastname}</td><td>${row.city}</td>`;
+                    tableBody.appendChild(tr);
+                });
+
+                sortableHeaders.forEach(header => {
+                    header.classList.remove('sorted-asc', 'sorted-desc');
+                    if (header.textContent.toLowerCase().replace(' ', '') === currentSortColumn) {
+                        header.classList.add(`sorted-${sortDirection}`);
+                    }
+                });
+            }
+
+            function updatePagination() {
+                pageInfo.textContent = `Page ${currentPage} of ${Math.ceil(filteredData.length / rowsPerPage)}`;
+                prevPageButton.classList.toggle('disabled', currentPage === 1);
+                nextPageButton.classList.toggle('disabled', currentPage * rowsPerPage >= filteredData.length);
+            }
+
+            renderTable();
+            updatePagination();
+        });
+    </script>
+</body>
+</html>

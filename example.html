@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Form Builder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #E0E0E0;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #BB86FC;
+            text-align: center;
+        }
+        .form-container {
+            max-width: 600px;
+            margin: auto;
+            background-color: #1E1E1E;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .field-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .field-container input, 
+        .field-container select, 
+        .field-container button {
+            margin-right: 10px;
+        }
+        .field-container input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            background-color: #333;
+            border: 1px solid #555;
+            color: #E0E0E0;
+            border-radius: 5px;
+        }
+        .field-container button {
+            background-color: #333;
+            border: 1px solid #555;
+            color: #E0E0E0;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .field-container button:hover {
+            background-color: #444;
+        }
+        .add-field {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .add-field select {
+            padding: 10px;
+            background-color: #333;
+            border: 1px solid #555;
+            color: #E0E0E0;
+            border-radius: 5px;
+        }
+        .add-field button {
+            background-color: #03DAC6;
+            border: none;
+            color: #121212;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .add-field button:hover {
+            background-color: #02c9a4;
+        }
+        .options-container {
+            flex: 1 1 100%;
+            margin-top: 10px;
+        }
+        .final-form {
+            display: none;
+            margin-top: 20px;
+            background-color: #1E1E1E;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .final-form h2 {
+            color: #BB86FC;
+        }
+        .final-form button {
+            background-color: #03DAC6;
+            border: none;
+            color: #121212;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        .final-form button:hover {
+            background-color: #02c9a4;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Dynamic Form Builder</h1>
+<div class="form-container" id="formContainer">
+    <!-- Dynamic fields will be added here -->
+</div>
+<div class="add-field">
+    <select id="fieldType">
+        <option value="text">Text Input</option>
+        <option value="checkbox">Checkbox</option>
+        <option value="radio">Radio Button</option>
+    </select>
+    <button onclick="addField()">Add Field</button>
+</div>
+<div class="final-form" id="finalForm">
+    <h2>Final Form</h2>
+    <button onclick="confirmForm()">Confirm Form</button>
+</div>
+
+<script>
+    let fieldCount = 0;
+
+    function addField() {
+        const formContainer = document.getElementById('formContainer');
+        const fieldType = document.getElementById('fieldType').value;
+        fieldCount++;
+
+        const fieldContainer = document.createElement('div');
+        fieldContainer.className = 'field-container';
+        fieldContainer.id = `field-${fieldCount}`;
+
+        let fieldElement;
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.placeholder = 'Name';
+
+        fieldContainer.appendChild(nameInput);
+
+        if (fieldType === 'text') {
+            fieldElement = document.createElement('input');
+            fieldElement.type = 'text';
+            fieldElement.placeholder = 'Enter text...';
+        } else {
+            fieldElement = document.createElement('div');
+            fieldElement.className = 'options-container';
+            
+            const addOptionButton = document.createElement('button');
+            addOptionButton.innerHTML = 'Add Option';
+            addOptionButton.onclick = () => addOption(fieldElement, fieldType, nameInput.value);
+
+            fieldContainer.appendChild(addOptionButton);
+        }
+
+        const deleteButton = document.createElement('button');
+        deleteButton.innerHTML = 'Delete';
+        deleteButton.onclick = () => removeField(fieldContainer.id);
+        fieldContainer.appendChild(deleteButton);
+
+        fieldContainer.appendChild(fieldElement);
+        formContainer.appendChild(fieldContainer);
+    }
+
+    function addOption(container, type, name) {
+        const optionContainer = document.createElement('div');
+        const optionLabel = document.createElement('input');
+        optionLabel.type = 'text';
+        optionLabel.placeholder = 'Option';
+
+        const optionInput = document.createElement('input');
+        optionInput.type = type;
+        if (type === 'radio') {
+            optionInput.name = name;
+        }
+
+        optionContainer.appendChild(optionLabel);
+        optionContainer.appendChild(optionInput);
+        container.appendChild(optionContainer);
+    }
+
+    function removeField(id) {
+        const field = document.getElementById(id);
+        field.remove();
+    }
+
+    function confirmForm() {
+        const formContainer = document.getElementById('formContainer');
+        const finalForm = document.getElementById('finalForm');
+        finalForm.innerHTML = '<h2>Final Form</h2><button onclick="confirmForm()">Confirm Form</button>';
+
+        const fields = formContainer.children;
+        for (const field of fields) {
+            const name = field.querySelector('input[type="text"]').value;
+            const optionsContainer = field.querySelector('.options-container');
+
+            if (optionsContainer) {
+                const options = optionsContainer.querySelectorAll('div');
+                for (const option of options) {
+                    const optionLabel = option.querySelector('input[type="text"]').value;
+                    const optionInput = option.querySelector('input[type="checkbox"], input[type="radio"]');
+                    if (optionInput.type === 'radio') {
+                        finalForm.innerHTML += `
+                            <div>
+                                <input type="radio" name="${optionInput.name}" id="${optionLabel}">
+                                <label for="${optionLabel}">${optionLabel}</label>
+                            </div>`;
+                    } else if (optionInput.type === 'checkbox') {
+                        finalForm.innerHTML += `
+                            <div>
+                                <input type="checkbox" id="${optionLabel}">
+                                <label for="${optionLabel}">${optionLabel}</label>
+                            </div>`;
+                    }
+                }
+            } else {
+                const inputField = field.querySelector('input[type="text"]:nth-child(2)');
+                finalForm.innerHTML += `
+                    <div>
+                        <label for="${name}">${name}</label>
+                        <input type="text" id="${name}" placeholder="${inputField.placeholder}">
+                    </div>`;
+            }
+        }
+        
+        finalForm.style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
